@@ -13,9 +13,9 @@
 
 LoadPackage("grape");
 LoadPackage("setorbit");
-DeclarePackage("coco", "0.6", ReturnTrue);
+DeclarePackage("coco-ii", "0.0.1", ReturnTrue);
 
-DeclarePackageDocumentation("coco", "doc");
+DeclarePackageDocumentation("coco-ii", "doc");
 
 
 for name in 
@@ -27,5 +27,5 @@ for name in
    "aut",
    "utility"]
   do
-    ReadPkg( "coco", Concatenation("lib/", name, ".gd"));
+    ReadPkg( "coco-ii", Concatenation("lib/", name, ".gd"));
 od;

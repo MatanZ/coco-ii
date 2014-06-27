@@ -5,13 +5,13 @@
 ################################################################
 
 
-ReadPkg( "coco", "files.g");
+ReadPkg( "coco-ii", "files.g");
 
 for name in  COCO_FILENAMES
   do
-    ReadPkg( "coco", Concatenation("lib/", name, ".gi"));
+    ReadPkg( "coco-ii", Concatenation("lib/", name, ".gi"));
 od;
 
 
-ReadPkg("coco", "lib/doc.g");
-ReadPkg("coco", "lib/cocoio.g");
+ReadPkg("coco-ii", "lib/doc.g");
+ReadPkg("coco-ii", "util/cocoio.g");

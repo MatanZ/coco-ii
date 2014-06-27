@@ -8,9 +8,10 @@ DeclareOperation("SetEntryOfTensor", [IsTensor and IsMutable,
         IsPosInt, IsPosInt, IsPosInt, IsObject]);
 DeclareOperation("IncrementEntryOfTensor", [IsTensor and IsMutable,
         IsPosInt, IsPosInt, IsPosInt]);
+DeclareGlobalFunction("SetReflexiveColors");
+DeclareGlobalFunction( "ReflexiveColors" );
 DeclareGlobalFunction("SetMates");
 DeclareGlobalFunction("GetMates");
-DeclareGlobalFunction( "ReflexiveColors" );
 DeclareProperty("IsTensorOfCoherentAlgebra", IsTensor);
 DeclareGlobalFunction("CollapsedTensor");
 DeclareAttribute("MergingsOfTensor", IsTensor);
@@ -25,3 +26,7 @@ DeclareGlobalFunction("SymmetricGoodSets");
 DeclareGlobalFunction("AllMergings");
 DeclareProperty( "IsCommutative", IsTensor );
 DeclareOperation( "Mates", [IsTensor] );
+
+DeclareSynonymAttr( "OrderOfTensor",                Order );
+DeclareSynonym("IsCommutativeTensor", IsCommutative);
+DeclareAttribute( "NumberOfFibres",                 IsTensor ); 

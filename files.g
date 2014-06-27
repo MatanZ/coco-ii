@@ -5,10 +5,14 @@
 ##
 
 COCO_FILENAMES :=
-  ["cobject", 
+  [
+   "cobject", 
    "tensor", 
    "colgraph", 
    "cellalg", 
    "hashmap",
    "aut",
-   "utility"];
+   "queue",
+   "wlclosure",
+   "utility",
+  ];

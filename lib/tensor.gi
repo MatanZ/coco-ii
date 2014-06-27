@@ -140,6 +140,12 @@ InstallMethod(IncrementEntryOfTensor,
 end);
 
 ##################################################
+#M SetReflexiveColors( <tensor>, <list> )
+##
+InstallGlobalFunction(SetReflexiveColors, function(tensor, refl)
+    tensor!.reflexiveColors := refl;
+end);
+##################################################
 #M SetMates( <tensor>, <permutation> )
 ##
 InstallGlobalFunction(SetMates, function(tensor, perm)
@@ -561,6 +567,13 @@ InstallMethod( Mates,
         0,
         function(t)
     return t!.mates;
+end);
+
+InstallOtherMethod(NumberOfFibres,
+        "for structure constants tensors",
+        [IsTensor],
+        function(tensor)
+        return Length(ReflexiveColors(tensor));
 end);
 
                 

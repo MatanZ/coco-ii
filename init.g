@@ -25,6 +25,8 @@ for name in
    "cellalg", 
    "hashmap",
    "aut",
+   "queue",
+   "wlclosure",
    "utility"]
   do
     ReadPkg( "coco-ii", Concatenation("lib/", name, ".gd"));

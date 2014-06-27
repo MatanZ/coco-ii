@@ -14,7 +14,7 @@ InstallMethod(StructureConstantsOfColorGraph,
         [IsColorGraph and IsColorGraphRep],
         function(cgr)
     local i, j, k, pos,
-          tensor, partition, colors, row, column, twoOrbit;
+          tensor, partition, colors, row, column, twoOrbit, refl;
     colors := [];
     partition := [];
     for i in [1..GroupRankOfColorGraph(cgr)] do
@@ -28,9 +28,11 @@ InstallMethod(StructureConstantsOfColorGraph,
     od;
     #Print(partition, "\n");
     tensor := NullTensor(Group(()), Rank(cgr));
+    refl:=List([1..Rank(cgr)], x->false);
     for k in [1..Rank(cgr)] do
         twoOrbit := Position(cgr!.orbitColors, k);
         twoOrbit := cgr!.twoOrbReps[twoOrbit];
+        if twoOrbit[1]=twoOrbit[2] then refl[k]:=true ; fi ;
         row := RowOfColorGraph(cgr, twoOrbit[1]);
         column := ColumnOfColorGraph(cgr, twoOrbit[2]);
         for pos in [1..Order(cgr)] do
@@ -40,6 +42,8 @@ InstallMethod(StructureConstantsOfColorGraph,
         od;
     od;
     SetMates(tensor, TranspositionOnColors(cgr));
+    SetReflexiveColors(tensor, ListBlist([1..Rank(cgr)], refl));
+
     MakeImmutable(tensor);
     return tensor;
 end);

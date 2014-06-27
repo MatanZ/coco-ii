@@ -1,0 +1,32 @@
+
+<#GAPDoc Label="UnitTests">
+<Chapter> <Heading>Unit tests</Heading>
+  <Example>
+gap&gt; g := Group((1,2,3,4,5));;
+gap&gt; cgr := CentralizerAlgebra(g);
+&lt;color graph of order 5 and rank 5&gt;
+
+gap&gt; Rank(cgr);
+5
+
+gap&gt; Order(cgr);
+5
+
+gap&gt; sub := CoherentSubalgebras(cgr);;
+gap&gt; Length(sub);
+2
+
+gap&gt; List(sub, Rank);
+[ 5, 3 ]
+</Example>
+<Example>
+gap&gt; fano := Set(Orbit(Group((1,2,3,4,5,6,7)), [1,2,4], OnSets));;
+gap&gt; orb := Orbit(AlternatingGroup(8), fano, OnSetsSets);;
+gap&gt; g := Operation(AlternatingGroup(8), orb, OnSetsSets);;
+gap&gt; cgr := CentralizerAlgebra(g); 
+&lt;color graph of order 120 and rank 5&gt;
+gap&gt; sub := CoherentSubalgebras(cgr);;
+gap&gt; Length(sub);
+</Example>
+</Chapter>
+<#/GAPDoc>

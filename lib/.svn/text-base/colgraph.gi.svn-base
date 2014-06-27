@@ -1,0 +1,564 @@
+#############################################################################
+##
+##  colgraph.gi                  COCO package                      
+##                                                              Mikhail Klin
+##                                                            Christian Pech
+##                                                             Sven Reichard
+##
+##  Copyright 2006 University of Western Australia
+##
+##  Implementation for color graphs
+##
+#############################################################################
+
+
+##
+#N  Requires cobject
+##
+##
+##################################################
+##  <#GAPDoc Label="ColorGraphs">
+##  <Chapter> <Heading>Color Graphs</Heading>
+##    <Section> <Heading>Constructing color graphs</Heading>
+##      <#Include Label="ColorGraph">
+##    </Section> 
+##  </Chapter>
+##  <#/GAPDoc>
+####################
+#F ColorGraphFam
+####################
+
+ColorGraphFam := NewFamily("ColorGraphFam", IsColorGraph);
+##########################
+#R IsColorGraphRep
+##########################
+DeclareRepresentation( "IsColorGraphRep", 
+        # IsAttributeStoringRep,
+        IsCocoObjectRep,
+        ["twoOrbReps",      # representatives of edge orbits
+         "mates",           # permutation mapping each two-orb to its 
+         #                  # transpose
+         "orbitColors",     # for each rep its color
+         "twoOrbitNumbers", # for each vertex orbit a row of the adj mat
+         "colorNames",
+         "names"]);         # vertex names
+
+DeclareRepresentation( "IsColorGraphMatrixRep",
+        IsAttributeStoringRep,
+        ["matrix"
+         ]);
+
+###############################  
+#F ColorGraph
+## <#GAPDoc Label="ColorGraph">
+##   <ManSection>
+##     <Func Name="ColorGraph" Arg="group [, points [, action] ]"/>
+##     <Description>The basic function to construct color graphs.
+##       Returns the centralizer algebra of group in its action on points.
+##       <Example>
+## gap&gt; d7 := Group( (1,2,3,4,5,6,7), (1,7)(2,6)(3,5));;
+## gap&gt; cgr := ColorGraph(d7);
+## &lt;color graph of order 7 and rank 4&gt;
+## </Example>
+##     </Description>
+##   </ManSection>
+## <#/GAPDoc>
+###############################
+
+InstallGlobalFunction(ColorGraph,
+       
+function(arg)
+    local ii, i, j, k, l,obj,
+          group, points, orbits, twoOrbReps, representatives,
+          edge, color, colors, mates, repWord;
+    obj := CallFuncList( CocoObjectTemplate, arg );
+    obj.twoOrbReps := [];
+    obj.twoOrbitNumbers := [];
+    obj.orbitColors := [];
+    colors := [];
+    k := 0;
+    for ii in [1..Length(obj.representatives)] do
+        i := obj.representatives[ii];
+        obj.twoOrbitNumbers[ii] := [];
+        for j in Orbits(Stabilizer(obj.group, i), [1..obj.order]) do
+            Add(obj.twoOrbReps, [i, j[1]]);
+            k := k+1;
+            for l in j do
+                obj.twoOrbitNumbers[ii][l] := k;
+            od;
+        od;
+    od;
+    obj.orbitColors := [1..Length(obj.twoOrbReps)];
+    
+    obj.colorNames := [1..Length(obj.twoOrbReps)];
+    obj :=  Objectify(NewType(ColorGraphFam, IsColorGraphRep), obj);
+
+    # calculate symmetric mates
+    obj!.mates := PermList(List([1..GroupRankOfColorGraph(obj)], x ->
+                          TwoOrbitNumberOfColorGraph(obj, 
+                                  Reversed(obj!.twoOrbReps[x]))));
+    return obj;
+end);
+
+ColorGraphFromMatrix := function(matrix)
+    local record, result, entries;
+    entries := Union(matrix);
+    matrix := List(matrix, x -> List(x, y -> Position(entries, y)));
+    record := rec( matrix := matrix );
+    result := Objectify(NewType(ColorGraphFam, IsColorGraphMatrixRep),
+                      record);
+    return result;
+end;
+
+################################
+#M ViewObj(cgr)
+####################
+InstallMethod(ViewObj, 
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph],
+        0,
+        function(x)
+    Print("<");
+    Print("color graph of order ", Order(x), 
+          " and rank ", Rank(x), ">");
+end);
+
+InstallMethod(PrintObj,
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph and IsColorGraphRep],
+        0,
+        function(cgr)
+    local   partition;
+    if cgr!.orbitColors = [1..Rank(cgr)] then
+        Print("ColorGraph( ", GroupOfCocoObject(cgr), " )");
+    else
+        partition := List(Set(cgr!.orbitColors), x ->
+                          Filtered([1..Length(cgr!.orbitColors)], y ->
+                                  cgr!.orbitColors[y] = x));
+        Print("CoherentSubalgebra( ColorGraph( ",
+
+              GroupOfCocoObject(cgr), "), ", partition, ")");
+    fi;
+end);
+InstallMethod(PrintObj,
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph and IsColorGraphMatrixRep],
+        0,
+        function(cgr)
+    Print("ColorGraphFromMatrix(\n");
+    PrintArray(cgr!.matrix);
+    Print(")");
+end);
+
+
+
+###################
+#M Display(cgr)
+###################
+
+InstallMethod(Display,
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph],
+        0,
+        function(cgr)
+    Print("color graph\n");
+    Display(List([1..Order(cgr)], x -> RowOfColorGraph(cgr, x)));
+end);
+
+
+
+InstallOtherMethod(Order,
+        "for color graphs", 
+        ReturnTrue,
+        [IsColorGraph and IsColorGraphMatrixRep],
+        0,
+        x -> Length(x!.matrix));
+
+InstallOtherMethod(Rank, 
+        "for color graphs", 
+        ReturnTrue,
+        [IsColorGraph and IsColorGraphRep],
+        0,
+        function(cgr)
+    return Length(Set(cgr!.orbitColors));
+end);
+
+InstallOtherMethod(Rank, 
+        "for color graphs", 
+        ReturnTrue,
+        [IsColorGraph and IsColorGraphMatrixRep],
+        0,
+        function(cgr)
+    return Length(Union(cgr!.matrix));
+end);
+##############################
+#M GroupOfColorGraph
+##############################
+InstallMethod(GroupOfColorGraph, 
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph],
+        0,
+        function(x)
+    return x!.group;
+end);
+
+####################
+#M GroupRankOfColorGraph
+####################
+InstallMethod(GroupRankOfColorGraph, 
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph],
+        0,
+        function(x)
+    return Length(x!.twoOrbReps);
+end);
+
+############################################
+#F TwoOrbitRepresentative( <cgr>, <twoOrbit> )
+############################################
+InstallGlobalFunction(TwoOrbitRepresentative,
+        function( cgr, twoOrbit )
+    return cgr!.twoOrbReps[twoOrbit];
+end);
+
+
+####################
+#M RowOfColorGraph
+####################
+
+InstallMethod(RowOfColorGraph,
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph and IsColorGraphRep, IsPosInt],
+        0,
+        function(cgr, i)
+    
+    local w, row, repWord, generators, schreier;
+    schreier := cgr!.schreier;
+    generators := GeneratorsOfGroup(cgr!.group);
+    repWord := RepWord(generators, schreier, i);
+    row := cgr!.twoOrbitNumbers[-schreier[repWord.representative]];
+    for w in repWord.word do
+        row := Permuted(row, generators[w]);
+    od;
+    return List(row, x -> Position(cgr!.colorNames,cgr!.orbitColors[x]));
+end);
+
+InstallMethod(RowOfColorGraph,
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph and IsColorGraphMatrixRep, IsPosInt],
+        0,
+        function(cgr, i)
+    return cgr!.matrix[i];
+end);
+
+####################
+#M ColumnOfColorGraph
+####################
+InstallMethod(ColumnOfColorGraph,
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph, IsPosInt],
+        0,
+        function(cgr, i)
+    local w, row, repWord, generators, schreier;
+    schreier := cgr!.schreier;
+    generators := GeneratorsOfGroup(cgr!.group);
+    repWord := RepWord(generators, schreier, i);
+    row := cgr!.twoOrbitNumbers[-schreier[repWord.representative]];
+    for w in repWord.word do
+        row := Permuted(row, generators[w]);
+    od;
+    row :=  List(row, x -> cgr!.orbitColors[x^cgr!.mates]);
+    return List(row, x -> Position(cgr!.colorNames, x));
+    
+end);
+####################
+#M EdgeColorOfColorGraph
+####################
+InstallMethod(EdgeColorOfColorGraph,
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph, IsPosInt, IsPosInt],
+        0,
+        function(cgr, i, j)
+    return RowOfColorGraph(cgr, i)[j];
+end);
+
+####################
+#M SetEdgeOrbitColorOfColorGraph
+####################
+
+InstallMethod(SetEdgeOrbitColorOfColorGraph,
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph, IsPosInt, IsPosInt, IsPosInt],
+        0,
+        function(cgr, i, j, color)
+    
+    local w, row, repWord, generators, schreier, subOrbit, rank;
+    subOrbit := TwoOrbitNumberOfColorGraph(cgr, [i, j]);
+    
+    cgr!.orbitColors[subOrbit] := color;
+    cgr!.colorNames := Set(cgr!.orbitColors);
+    
+end);
+
+####################
+#M BaseGraphOfColorGraph
+####################
+
+InstallMethod(BaseGraphOfColorGraph,
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph, IsPosInt],
+        0,
+        function(cgr, color)
+    return Graph(GroupOfCocoObject(cgr), [1..Order(cgr)],
+                   OnPoints, function(x,y)
+        return EdgeColorOfColorGraph(cgr, x, y) = color; end, true);
+end);
+################################
+#M IsIsomorphismOfObjects(cgr1, cgr2, perm)
+####################
+InstallMethod(IsIsomorphismOfObjects, 
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph, IsColorGraph, IsPerm],
+        0,
+        function(cgr1, cgr2, g)
+    local row1, row2, i, j;
+    #Print("checking isomorphism...\c");
+    if (Order(cgr1) <> Order(cgr2)) then
+        return false;
+    fi;
+    if Rank(cgr1) <> Rank(cgr2) then
+        #Print("false\n");
+        return false;
+    fi;
+    for i in [1..Order(cgr1)] do
+        row1 := Permuted(RowOfColorGraph(cgr1, i), g);
+        row2 := RowOfColorGraph(cgr2, i^g);
+        if row1 <> row2 then
+            #Print("false\n");
+           return false;
+        fi;
+    od;
+    #Print("true\n");
+    return true;
+end);
+
+aBigNumber:=2^32;
+_hashsize:=997;
+
+##################################################
+#F TestIsomorphismCgr
+##################################################
+TestIsomorphismCgr:=function(TRec1, TRec2, perm)
+    local i,j,row1,row2,W1,W2;
+    
+#    return true;
+    W1:=TRec1.T;
+    W2:=TRec2.T;
+    
+    return IsIsomorphismOfObjects(W1, W2, perm);
+end;
+##################################################
+#F CgrInv
+##################################################
+CgrInv:=function(obj,v)
+    local inv,row;
+    
+    row:=RowOfColorGraph(obj.T,v);
+    inv:=List(obj.ST, y->row[y]);
+    Add(inv, obj.fvc[v]);
+    return inv;
+end;
+##################################################
+#F CgrInvHash
+##################################################
+CgrInvHash:=function(inv)
+    return inv*[1..Length(inv)]*aBigNumber mod _hashsize + 1;
+end;
+
+##################################################
+#V CgrInvariant
+##################################################
+CgrInvariant:=rec(
+                   finv:=CgrInv,
+                   hashinv:=CgrInvHash,
+                   test:=TestIsomorphismCgr
+                  );
+
+
+NewAutGroup := function(cgr)
+    local P0, R, order, result, sym, base, sgs;
+    order := Order(cgr);
+    P0 := TrivialPartition([1..order]);
+    sym := SymmetricGroup(order);
+    R := EmptyRBase(sym, [1..order], P0);
+    
+    R.nextLevel := function(P, rbase)
+        local fix, p, where, row, part,i, strat, lengths, maxLength, 
+              longCell;
+        #Print("next level: ", Length(rbase.base)+1, "\n");
+#        maxLength := Maximum(P.lengths);
+#        if 1 in P.lengths then
+#            maxLength := 1;
+#        fi;
+#        longCell := Position(P.lengths, maxLength);
+        #Print("cell of Length ", maxLength, "\n");
+        NextRBasePoint(P, rbase);
+        p := rbase.base[Length(rbase.base)];
+        row := RowOfColorGraph(cgr, p);
+        part := List(Set(row), x -> Filtered([1..Length(row)], y -> row[y]=x));
+        strat := StratMeetPartition(rbase, P, Partition(part));
+        #Print("Lengths: ",Collected(P.lengths), "\n");
+        #Print("strat: ", strat, "\n");
+        AddRefinement(rbase, "_CocoAutGroup", [cgr, P.cellno[p], 
+                rec(strat := strat, dummy := "test")]);
+        
+    end;
+    result := PartitionBacktrack(sym,
+                      g -> IsIsomorphismOfObjects(cgr, cgr, g),
+                      false,
+                      R,
+                      [P0, cgr],
+                      GroupOfCocoObject(cgr), 
+                      GroupOfCocoObject(cgr));
+    return result;
+end;
+
+Refinements._CocoAutGroup := function(R, I, cgr, cellno, strat)
+    local S, row, part,  order, q, result;
+    cgr := I.data[2];
+    S := I.partition;
+    q := FixpointCellNo(S, cellno);
+    row := RowOfColorGraph(cgr, q);
+    part := List(Set(row), x -> Filtered([1..Length(row)], y -> row[y]=x));
+
+    result := MeetPartitionStrat(R, I, Partition(part), (),strat.strat);
+    
+    return result;
+end;
+
+   
+
+    
+
+##################################################
+#M AutGroupOfCocoObject( <cgr> )
+##################################################
+InstallMethod(AutGroupOfCocoObject, 
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph],
+        0,
+        function(cgr)
+    local inv;
+    inv := MakeInvariant(cgr);
+    return FindAutomorphismGroup(inv);
+end);
+
+InstallOtherMethod(AutomorphismGroup,
+        "for color graphs",
+        [IsColorGraph],
+        function(cgr)
+    return AutGroupOfCocoObject( cgr );
+end);
+
+InstallMethod(ColorAutomorphismGroup,
+        "for color graphs",
+        ReturnTrue,
+        [IsColorGraph],
+        0,
+        function(cgr)
+    local inv;
+    inv := MakeWeakInvariant(cgr);
+    return FindAutomorphismGroup(inv);
+end);
+
+##################################################
+#F TwoOrbitNumberOfColorGraph( <cgr>, <edge> )
+##################################################
+InstallGlobalFunction(
+        TwoOrbitNumberOfColorGraph, function(cgr, edge)
+    local i, j,repWord;
+    repWord := RepresentativeWordOfCocoObject(cgr, edge[1]);
+    j := edge[2];
+    for i in Reversed(repWord.word) do
+        j := j/GeneratorsOfGroup(GroupOfCocoObject(cgr))[i];
+    od;
+    return cgr!.twoOrbitNumbers[-cgr!.schreier[repWord.representative]][j];
+    
+end);
+    
+InstallMethod( ColorRepresentative,
+        "for color graphs and integers",
+        [IsColorGraph, IsInt],
+        function(cgr, color)
+    local pos;
+    pos := Position(cgr!.orbitColors, color);
+    if pos = fail then
+        return fail;
+    fi;
+    return cgr!.twoOrbReps[pos];
+end);
+
+InstallMethod( Fibres,
+        "for color graphs",
+        [IsColorGraph],
+        function(cgr)
+    local   orbits,  colors,  colorSet,  fibres;
+
+    orbits := Orbits(GroupOfCocoObject(cgr), [1..Order(cgr)]);
+    colors := List(orbits, x -> EdgeColorOfColorGraph(cgr, x[1], x[1]));
+    colorSet := Set(colors);
+    fibres := List(colorSet, x -> Filtered([1..Length(colors)],  y ->
+                      colors[y] = x));
+    fibres := List(fibres, x -> Union(orbits{x}));
+    return fibres;
+end);
+
+InstallMethod( Neighbors,
+        "for a color graph, a vertex, and a color",
+        [IsColorGraph, IsInt, IsInt],
+        function(cgr, x, color)
+    local row, result;
+    row := RowOfColorGraph(cgr, x);
+    result := Filtered([1..Length(row)], y -> row[y] = color);
+    return result;
+end);
+
+InstallMethod( IsHomogeneous,
+        "for a color graph",
+        [IsColorGraph],
+        function(cgr)
+    return Length(Fibres(cgr)) = 1;
+end);
+
+IsSchurian := function(cgr)
+    local   aut;
+    
+    aut := AutomorphismGroup(cgr);
+
+    return Rank(cgr) = Rank(ColorGraph(AutomorphismGroup(cgr)));
+end;
+
+###########################################################
+#E Emacs
+##
+##  Local Variables:
+##  mode:               gap
+##  mode:               outline-minor
+##  outline-regexp:     "#A\\|#P\\|#O\\|#F\\|#E\\|#N\\|#M\\|#V\\|#R"
+##  fill-column:        76
+##  End:
+##

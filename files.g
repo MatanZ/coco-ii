@@ -15,4 +15,5 @@ COCO_FILENAMES :=
    "queue",
    "wlclosure",
    "utility",
+   "character",
   ];

@@ -19,7 +19,8 @@ DeclarePackageDocumentation("coco-ii", "doc");
 
 
 for name in 
-  ["cobject", 
+  [
+   "cobject", 
    "tensor", 
    "colgraph", 
    "cellalg", 
@@ -27,7 +28,9 @@ for name in
    "aut",
    "queue",
    "wlclosure",
-   "utility"]
+   "utility",
+   "character",
+   ]
   do
     ReadPkg( "coco-ii", Concatenation("lib/", name, ".gd"));
 od;

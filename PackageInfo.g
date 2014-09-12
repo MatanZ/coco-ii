@@ -132,14 +132,14 @@ Persons := [
     FirstNames    := "Sven",
     IsAuthor      := true,
     IsMaintainer  := true,
-    Email         := "reichard@maths.uwa.edu",
-    #WWWHome       := "http://www.mathematik.tu-darmstadt.de/~nickel",
+    Email         := "sven.reichard@tu-dresden.de",
+    WWWHome       := "http://tu-dresden.de/Members/sven.reichard",
     #PostalAddress := Concatenation( [
     #                   "AG 2, Fachbereich Mathematik, TU Darmstadt\n",
     #                   "Schlossgartenstr. 7, 64289 Darmstadt\n",
     #                   "Germany" ] ),
-    Place         := "Perth",
-    Institution   := "University of Western Australia"
+    Place         := "Dresden",
+    Institution   := "Technische Universitaet Dresden"
   ),
 
 # provide such a record for each author and/or maintainer ...
@@ -196,7 +196,7 @@ AbstractHTML :=
                      automorphism groups and lattices of subconfigurations.",
                    
 
-PackageWWWHome := "http://www.math.rwth-aachen.de/~Greg.Gamble/Example",
+PackageWWWHome := "https://github.com/MatanZ/coco-ii",
                
 ##  Here is the information on the help books of the package, used for
 ##  loading into GAP's online help and maybe for an online copy of the 
